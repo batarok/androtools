@@ -1,5 +1,5 @@
 #!/bin/bash
-
+sleep 60
 # Fungsi untuk mengecek status koneksi internet
 check_internet_connection() {
     ping -c 1 8.8.8.8 > /dev/null 2>&1
@@ -66,5 +66,5 @@ while true; do
     fi
 
     # Tunggu beberapa detik sebelum mencoba lagi
-    sleep 5
+    sleep 300
 done

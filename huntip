@@ -1,0 +1,70 @@
+#!/bin/bash
+
+# Fungsi untuk mengecek status koneksi internet
+check_internet_connection() {
+    ping -c 1 8.8.8.8 > /dev/null 2>&1
+    return $?
+}
+
+# Fungsi untuk mendapatkan IP address GSM
+get_gsm_ip() {
+    ip=$(ifconfig rmnet0 | grep "inet addr" | awk '{print $2}' | cut -d ':' -f2)
+    echo $ip
+}
+
+# Fungsi untuk mengaktifkan atau menonaktifkan mode pesawat
+toggle_airplane_mode() {
+    state=$1
+    if [ "$state" == "on" ]; then
+        settings put global airplane_mode_on 1
+        am broadcast -a android.intent.action.AIRPLANE_MODE --ez state true
+    else
+        settings put global airplane_mode_on 0
+        am broadcast -a android.intent.action.AIRPLANE_MODE --ez state false
+    fi
+}
+
+# Fungsi untuk memeriksa apakah IP di atas 10.111
+is_ip_above_10_111() {
+    local ip=$1
+    local second_octet=$(echo $ip | cut -d '.' -f2)
+
+    # Cek apakah oktet kedua lebih besar dari 111
+    if [ "$second_octet" -gt 111 ]; then
+        return 0  # True
+    else
+        return 1  # False
+    fi
+}
+
+# Loop utama
+while true; do
+    # Aktifkan mode pesawat jika tidak ada koneksi internet
+    if ! check_internet_connection; then
+        echo "Tidak ada koneksi internet. Mengaktifkan mode pesawat..."
+        toggle_airplane_mode on
+        sleep 5  # Beri waktu untuk memastikan mode pesawat aktif
+        toggle_airplane_mode off
+        sleep 5  # Beri waktu untuk mendapatkan IP setelah mode pesawat dinonaktifkan
+
+        # Cek IP GSM setelah mode pesawat dimatikan
+        gsm_ip=$(get_gsm_ip)
+        echo "IP GSM ditemukan: $gsm_ip"
+
+        # Jika IP tidak di atas 10.111, aktifkan mode pesawat kembali
+        if ! is_ip_above_10_111 "$gsm_ip"; then
+            echo "IP tidak sesuai. Mengaktifkan ulang mode pesawat..."
+            toggle_airplane_mode on
+            sleep 5
+        else
+            echo "IP sesuai: $gsm_ip"
+            break  # Keluar dari loop jika IP sesuai
+        fi
+    else
+        echo "Koneksi internet stabil dengan IP yang sesuai."
+        break
+    fi
+
+    # Tunggu beberapa detik sebelum mencoba lagi
+    sleep 5
+done

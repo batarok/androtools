@@ -1,0 +1,30 @@
+#!/system/bin/sh
+
+# Fungsi untuk mendapatkan kapasitas baterai saat ini
+get_battery_capacity() {
+    cat /sys/class/power_supply/battery/capacity
+}
+
+# Fungsi untuk mengaktifkan pengisian daya
+enable_charging() {
+    echo 1 > /sys/class/power_supply/battery/charging_enabled
+}
+
+# Fungsi untuk menonaktifkan pengisian daya
+disable_charging() {
+    echo 0 > /sys/class/power_supply/battery/charging_enabled
+}
+
+# Loop untuk memantau dan mengontrol pengisian daya baterai
+while true; do
+    battery_capacity=$(get_battery_capacity)
+
+    if [ "$battery_capacity" -le 55 ]; then
+        enable_charging
+    elif [ "$battery_capacity" -ge 90 ]; then
+        disable_charging
+    fi
+
+    # Tunggu 60 detik sebelum memeriksa kembali
+    sleep 60
+done

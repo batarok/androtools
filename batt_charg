@@ -1,5 +1,5 @@
 #!/system/bin/sh
-
+sleep 30
 # Fungsi untuk mendapatkan kapasitas baterai saat ini
 get_battery_capacity() {
     cat /sys/class/power_supply/battery/capacity
